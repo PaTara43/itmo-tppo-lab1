@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<relay>
+	<ch1>
+		<state>ON</state>
+		<possible_states>ON, OFF</possible_states>
+	</ch1>
+	<ch2>
+		<state>ON</state>
+		<possible_states>ON, OFF</possible_states>
+	</ch2>
+	<ch3>
+		<state>ON</state>
+		<possible_states>ON, OFF</possible_states>
+	</ch3>
+	<ch4>
+		<state>ON</state>
+		<possible_states>ON, OFF</possible_states>
+	</ch4>
+	<ch5>
+		<state>ON</state>
+		<possible_states>ON, OFF</possible_states>
+	</ch5>
+	<ch6>
+		<state>ON</state>
+		<possible_states>ON, OFF</possible_states>
+	</ch6>
+</relay>
