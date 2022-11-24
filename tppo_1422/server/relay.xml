@@ -5,7 +5,7 @@
 		<possible_states>ON, OFF</possible_states>
 	</ch1>
 	<ch2>
-		<state>ON</state>
+		<state>OFF</state>
 		<possible_states>ON, OFF</possible_states>
 	</ch2>
 	<ch3>
