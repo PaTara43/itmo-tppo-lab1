@@ -16,7 +16,7 @@ from device_interactor import (
     watch_device_state,
     set_device_state,
     get_device_names,
-    get_device_by_path
+    get_device_by_path,
 )
 
 logger = logging.getLogger(__name__)
@@ -81,7 +81,7 @@ class IoTServerProtocol:
             logger.debug(f"Sending response '{response}' to '{addr}'.")
             self.transport.sendto(str(response).encode(), addr)
 
-    def _process_get(self, message_list: list, addr: str) -> None:
+    def _process_get(self, message_list: list, addr: tuple) -> None:
         """
         Process get request.
 
@@ -102,13 +102,9 @@ class IoTServerProtocol:
             success_flag = False
             message = f"Error processing 'get' request: {e}."
         finally:
-            if not success_flag:
-                logger.error(message)
-            response = {"Success": success_flag, "Message": message}
-            logger.debug(f"Sending response '{response}' to '{addr}'.")
-            self.transport.sendto(str(response).encode(), addr)
+            self._send_response(success_flag=success_flag, message=message, addr=addr)
 
-    def _process_set(self, message_list: list, addr: str) -> None:
+    def _process_set(self, message_list: list, addr: tuple) -> None:
         """
         Process set request.
 
@@ -135,13 +131,9 @@ class IoTServerProtocol:
             success_flag = False
             message = f"Error processing 'set' request: {e}."
         finally:
-            if not success_flag:
-                logger.error(message)
-            response = {"Success": success_flag, "Message": message}
-            logger.debug(f"Sending response '{response}' to '{addr}'.")
-            self.transport.sendto(str(response).encode(), addr)
+            self._send_response(success_flag=success_flag, message=message, addr=addr)
 
-    def _process_subscribe(self, message_list: list, addr: str) -> None:
+    def _process_subscribe(self, message_list: list, addr: tuple) -> None:
         """
         Process subscribe request.
 
@@ -154,12 +146,15 @@ class IoTServerProtocol:
             subscribed_attrs: list = []
             if len(message_list) == 1:
                 success_flag: bool = False
-                message: str = ("No device provided. Provide a device with its attributes. E.g. subscribe dev attr1 "
-                                "attr2.")
+                message: str = (
+                    "No device provided. Provide a device with its attributes. E.g. subscribe dev attr1 " "attr2."
+                )
             elif len(message_list) == 2:
                 success_flag: bool = False
-                message: str = (f"No attributes of device '{message_list[1]}' provided. Provide a device with its "
-                                f"attributes. E.g. subscribe dev attr1 attr2.")
+                message: str = (
+                    f"No attributes of device '{message_list[1]}' provided. Provide a device with its "
+                    f"attributes. E.g. subscribe dev attr1 attr2."
+                )
             else:
                 for i in range(2, len(message_list)):
                     if addr in self.subscribers_list[message_list[1]][message_list[i]]:
@@ -176,13 +171,9 @@ class IoTServerProtocol:
             success_flag = False
             message = f"Error processing 'subscribe' request: {e}."
         finally:
-            if not success_flag:
-                logger.error(message)
-            response = {"Success": success_flag, "Message": message}
-            logger.debug(f"Sending response '{response}' to '{addr}'.")
-            self.transport.sendto(str(response).encode(), addr)
+            self._send_response(success_flag=success_flag, message=message, addr=addr)
 
-    def _process_unsubscribe(self, addr: str) -> None:
+    def _process_unsubscribe(self, addr: tuple) -> None:
         """
         Process unsubscribe request. Unsubscribes from all the notifications.
 
@@ -201,11 +192,24 @@ class IoTServerProtocol:
             success_flag = False
             message = f"Error processing 'unsubscribe' request: {e}."
         finally:
-            if not success_flag:
-                logger.error(message)
-            response = {"Success": success_flag, "Message": message}
-            logger.debug(f"Sending response '{response}' to '{addr}'.")
-            self.transport.sendto(str(response).encode(), addr)
+            self._send_response(success_flag=success_flag, message=message, addr=addr)
+
+    def _send_response(self, success_flag: bool, message: str, addr: tuple):
+        """
+        Send response to client.
+
+        :param success_flag: Processed query success flag.
+        :param message: Accompanying message.
+        :param addr: Address to send response to.
+
+        """
+
+        if not success_flag:
+            logger.error(message)
+        response = {"Success": success_flag, "Message": message}
+        logger.debug(f"Sending response '{response}' to '{addr}'.")
+        self.transport.sendto(str(response).encode(), addr)
+
 
 async def main(host: str, port: int):
     """
@@ -237,9 +241,11 @@ async def main(host: str, port: int):
                     for attr in new_device_states.keys():
                         if new_device_states[attr] != protocol.current_device_states[device][attr]:
                             for address in protocol.subscribers_list[device][attr]:
-                                notification = f"Updates in device '{device}' attribute '{attr}'! " \
-                                          f"'{protocol.current_device_states[device][attr]}' -> " \
-                                          f"'{new_device_states[attr]}'"
+                                notification = (
+                                    f"Updates in device '{device}' attribute '{attr}'! "
+                                    f"'{protocol.current_device_states[device][attr]}' -> "
+                                    f"'{new_device_states[attr]}'"
+                                )
                                 notification_ = {"Success": True, "Message": notification}
                                 logger.debug(f"Sending notification '{notification_}' to '{address}'.")
                                 transport.sendto(str(notification_).encode(), address)

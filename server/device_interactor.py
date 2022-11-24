@@ -146,11 +146,21 @@ def watch_device_state(device: str, callback: any) -> None:
 
 
 if __name__ == "__main__":
+
     class EventHandler(pyinotify.ProcessEvent):
+        """
+        Sample event handler for file change events.
+        """
+
         def process_IN_CLOSE_WRITE(self, event):
+            """
+            Process file changed event.
+
+            :param event: Python Event.
+
+            """
             device = {i for i in DEVICES if DEVICES[i] == event.path}
             print(f"updates in {device.pop()}")
-
 
     logging.basicConfig(level=logging.INFO)
     dev = "relay"
